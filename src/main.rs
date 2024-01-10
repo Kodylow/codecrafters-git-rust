@@ -1,8 +1,12 @@
 use flate2::read::ZlibDecoder;
+use flate2::write::ZlibEncoder;
+use flate2::Compression;
 use serde_derive::Deserialize;
+use sha1::{Digest, Sha1};
 use std::env;
 use std::fs;
 use std::io::Read;
+use std::io::Write;
 #[allow(unused_imports)]
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
@@ -35,6 +39,24 @@ fn git_cat_file(args: &Vec<String>) {
     print!("{}", blob_string);
 }
 
+fn zlib_compress(data: &[u8]) -> Vec<u8> {
+    let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(data).unwrap();
+    encoder.finish().unwrap()
+}
+
+fn git_hash_object(args: &Vec<String>) {
+    let data = &args[0];
+    let header = format!("blob {}\0", data.len());
+    let store = format!("{}{}", header, data);
+    let mut hasher = Sha1::new();
+    let path = format!(".git/objects/{}/{}", &hash[..2], &hash[2..]);
+    fs::create_dir_all(format!(".git/objects/{}", &hash[..2])).unwrap();
+    let compressed_data = zlib_compress(store.as_bytes());
+    fs::write(path, compressed_data).unwrap();
+    println!("{}", hash);
+}
+
 fn main() {
     let subscriber = FmtSubscriber::builder()
         .with_max_level(Level::INFO)
@@ -49,6 +71,7 @@ fn main() {
         match command.as_str() {
             "init" => git_init(),
             "cat-file" => git_cat_file(&args),
+            "hash-object" => git_hash_object(&args),
             _ => println!("unknown command: {}", command),
         }
     }
