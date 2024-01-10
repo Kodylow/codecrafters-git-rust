@@ -21,16 +21,17 @@ fn git_init() {
     info!("Initialized git directory")
 }
 
-fn git_cat_file(mut args: impl Iterator<Item = String>) {
-    let hash = args.next().unwrap();
+fn git_cat_file(args: &Vec<String>) {
+    let hash = &args[3];
     let path = format!(".git/objects/{}/{}", &hash[..2], &hash[2..]);
-    let contents = fs::read(path).unwrap();
-
-    let mut d = ZlibDecoder::new(&contents[..]);
+    let bytes = fs::read(path).unwrap();
+    // decompress
+    let mut decoder = ZlibDecoder::new(&bytes[..]);
     let mut s = String::new();
-    d.read_to_string(&mut s).unwrap();
-
-    println!("{}", s);
+    decoder.read_to_string(&mut s).unwrap();
+    // split header and blob
+    let blob_string = s.splitn(2, '\0').collect::<Vec<&str>>()[1];
+    print!("{}", blob_string);
 }
 
 fn main() {
@@ -45,7 +46,7 @@ fn main() {
         args.remove(0); // Remove the command from the args list
         match command.as_str() {
             "init" => git_init(),
-            "cat-file" => git_cat_file(args.into_iter()),
+            "cat-file" => git_cat_file(&args),
             _ => println!("unknown command: {}", command),
         }
     }
