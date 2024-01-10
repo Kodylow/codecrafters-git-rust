@@ -1,21 +1,47 @@
-#[allow(unused_imports)]
+use serde_derive::Deserialize;
 use std::env;
-#[allow(unused_imports)]
 use std::fs;
+use tracing::{info, Level};
+use tracing_subscriber::FmtSubscriber;
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "command", rename_all = "kebab-case")]
+enum GitArgs {
+    Init,
+    CatFile,
+}
+
+fn git_init() {
+    fs::create_dir(".git").unwrap();
+    fs::create_dir(".git/objects").unwrap();
+    fs::create_dir(".git/refs").unwrap();
+    fs::write(".git/HEAD", "ref: refs/heads/master\n").unwrap();
+    info!("Initialized git directory")
+}
+
+fn git_cat_file(mut args: impl Iterator<Item = String>) {
+    let hash = args.next().unwrap();
+    let path = format!(".git/objects/{}/{}", &hash[..2], &hash[2..]);
+    let contents = fs::read(path).unwrap();
+    let contents = zlib::inflate::inflate_bytes(&contents).unwrap();
+    let contents = String::from_utf8(contents).unwrap();
+    println!("{}", contents);
+}
 
 fn main() {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    println!("Logs from your program will appear here!");
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(Level::INFO)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+    info!("Logs from your program will appear here!");
 
-    // Uncomment this block to pass the first stage
-    let args: Vec<String> = env::args().collect();
-    if args[1] == "init" {
-        fs::create_dir(".git").unwrap();
-        fs::create_dir(".git/objects").unwrap();
-        fs::create_dir(".git/refs").unwrap();
-        fs::write(".git/HEAD", "ref: refs/heads/master\n").unwrap();
-        println!("Initialized git directory")
-    } else {
-        println!("unknown command: {}", args[1])
+    let mut args: Vec<String> = env::args().skip(1).collect();
+    if let Some(command) = args.get(0).cloned() {
+        args.remove(0); // Remove the command from the args list
+        match command.as_str() {
+            "init" => git_init(),
+            "cat-file" => git_cat_file(args.into_iter()),
+            _ => println!("unknown command: {}", command),
+        }
     }
 }
