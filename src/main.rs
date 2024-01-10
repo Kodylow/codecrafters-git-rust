@@ -22,7 +22,7 @@ fn git_init() {
 }
 
 fn git_cat_file(args: &Vec<String>) {
-    let hash = &args[2];
+    let hash = &args[1];
     let path = format!(".git/objects/{}/{}", &hash[..2], &hash[2..]);
     let bytes = fs::read(path).unwrap();
     // decompress
