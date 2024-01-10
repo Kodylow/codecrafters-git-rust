@@ -50,6 +50,8 @@ fn git_hash_object(args: &Vec<String>) {
     let header = format!("blob {}\0", data.len());
     let store = format!("{}{}", header, data);
     let mut hasher = Sha1::new();
+    hasher.update(store.as_bytes());
+    let hash = format!("{:x}", hasher.finalize());
     let path = format!(".git/objects/{}/{}", &hash[..2], &hash[2..]);
     fs::create_dir_all(format!(".git/objects/{}", &hash[..2])).unwrap();
     let compressed_data = zlib_compress(store.as_bytes());
