@@ -3,6 +3,7 @@ use serde_derive::Deserialize;
 use std::env;
 use std::fs;
 use std::io::Read;
+#[allow(unused_imports)]
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
