@@ -18,7 +18,7 @@ fn git_init() {
     fs::create_dir(".git/objects").unwrap();
     fs::create_dir(".git/refs").unwrap();
     fs::write(".git/HEAD", "ref: refs/heads/master\n").unwrap();
-    info!("Initialized git directory")
+    // info!("Initialized git directory")
 }
 
 fn git_cat_file(args: &Vec<String>) {
@@ -40,7 +40,7 @@ fn main() {
         .with_ansi(false) // Disable ANSI escape codes
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
-    info!("Logs from your program will appear here!");
+    // info!("Logs from your program will appear here!");
 
     let mut args: Vec<String> = env::args().skip(1).collect();
     if let Some(command) = args.get(0).cloned() {
