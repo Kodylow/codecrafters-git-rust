@@ -37,6 +37,7 @@ fn git_cat_file(args: &Vec<String>) {
 fn main() {
     let subscriber = FmtSubscriber::builder()
         .with_max_level(Level::INFO)
+        .with_ansi(false) // Disable ANSI escape codes
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
     info!("Logs from your program will appear here!");
