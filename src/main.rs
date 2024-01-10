@@ -1,6 +1,8 @@
+use flate2::read::ZlibDecoder;
 use serde_derive::Deserialize;
 use std::env;
 use std::fs;
+use std::io::Read;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
@@ -23,9 +25,12 @@ fn git_cat_file(mut args: impl Iterator<Item = String>) {
     let hash = args.next().unwrap();
     let path = format!(".git/objects/{}/{}", &hash[..2], &hash[2..]);
     let contents = fs::read(path).unwrap();
-    let contents = zlib::inflate::inflate_bytes(&contents).unwrap();
-    let contents = String::from_utf8(contents).unwrap();
-    println!("{}", contents);
+
+    let mut d = ZlibDecoder::new(&contents[..]);
+    let mut s = String::new();
+    d.read_to_string(&mut s).unwrap();
+
+    println!("{}", s);
 }
 
 fn main() {
